@@ -1,5 +1,7 @@
 # API de Monitoramento de Preços
 
+![Tests](https://github.com/Lucas-Bonatto/price-watch-api/actions/workflows/tests.yml/badge.svg)
+
 API desenvolvida em Python para cadastrar produtos, coletar preços via web scraping, salvar histórico de preços e verificar alertas quando o preço atual atingir ou ficar abaixo do preço desejado.
 
 Este projeto simula um cenário real de backend, com organização em camadas, banco de dados, documentação automática, tratamento de erros e testes automatizados.
