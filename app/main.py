@@ -7,7 +7,7 @@ from app.models.price_history import PriceHistory
 from app.models.product import Product
 from app.schemas.alert import PriceAlertResponse
 from app.schemas.price_history import PriceHistoryResponse
-from app.schemas.product import ProductCreate, ProductResponse
+from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
 from app.schemas.scraper import ScrapedProductResponse
 from app.scrapers.product_scraper import ProductScraper, ScraperError
 from app.services.alert_service import AlertService
@@ -17,7 +17,7 @@ Base.metadata.create_all(bind=engine)
 tags_metadata = [
     {
         "name": "Produtos",
-        "description": "Operações para cadastro, consulta, remoção e coleta de dados de produtos monitorados.",
+        "description": "Operações para cadastro, consulta, atualização, remoção e coleta de dados de produtos monitorados.",
     },
     {
         "name": "Histórico",
@@ -137,6 +137,44 @@ def get_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Produto não encontrado.",
         )
+
+    return product
+
+
+@app.patch(
+    "/products/{product_id}",
+    response_model=ProductResponse,
+    tags=["Produtos"],
+    summary="Atualizar produto",
+    description=(
+        "Atualiza parcialmente os dados de um produto. "
+        "É possível alterar nome, preço-alvo e status de monitoramento."
+    ),
+)
+def update_product(
+    product_id: int,
+    product_data: ProductUpdate,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    if product_data.name is not None:
+        product.name = product_data.name
+
+    if product_data.target_price is not None:
+        product.target_price = product_data.target_price
+
+    if product_data.is_active is not None:
+        product.is_active = product_data.is_active
+
+    db.commit()
+    db.refresh(product)
 
     return product
 

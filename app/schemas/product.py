@@ -29,11 +29,37 @@ class ProductCreate(BaseModel):
     )
 
 
-class ProductResponse(BaseModel):
+class ProductUpdate(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True,
-        title="Produto cadastrado",
+        title="Dados para atualização de produto",
+        json_schema_extra={
+            "example": {
+                "name": "Livro de teste atualizado",
+                "target_price": 60,
+                "is_active": True,
+            }
+        },
     )
+
+    name: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=255,
+        description="Novo nome do produto.",
+    )
+    target_price: float | None = Field(
+        default=None,
+        gt=0,
+        description="Novo preço-alvo para disparar o alerta.",
+    )
+    is_active: bool | None = Field(
+        default=None,
+        description="Indica se o produto continuará ativo para monitoramento.",
+    )
+
+
+class ProductResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(description="Identificador único do produto.")
     url: str = Field(description="URL do produto monitorado.")
