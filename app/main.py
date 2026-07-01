@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app.models.price_history import PriceHistory
 from app.models.product import Product
+from app.schemas.alert import PriceAlertResponse
 from app.schemas.price_history import PriceHistoryResponse
 from app.schemas.product import ProductCreate, ProductResponse
 from app.schemas.scraper import ScrapedProductResponse
 from app.scrapers.product_scraper import ProductScraper, ScraperError
+from app.services.alert_service import AlertService
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,6 +22,10 @@ tags_metadata = [
     {
         "name": "Histórico",
         "description": "Operações para consultar o histórico de preços coletados.",
+    },
+    {
+        "name": "Alertas",
+        "description": "Operações para verificar se um produto atingiu o preço desejado.",
     },
     {
         "name": "Sistema",
@@ -168,7 +174,7 @@ def delete_product(
     summary="Coletar dados atuais do produto",
     description=(
         "Acessa a URL cadastrada para o produto, coleta nome, preço e disponibilidade, "
-        "e salva o preço encontrado no histórico."
+        "salva o preço encontrado no histórico e verifica se o preço-alvo foi atingido."
     ),
 )
 def scrape_product(
@@ -203,6 +209,12 @@ def scrape_product(
     db.commit()
     db.refresh(price_history)
 
+    alert_service = AlertService()
+    price_alert = alert_service.check_price_alert(
+        current_price=scraped_product.price,
+        target_price=product.target_price,
+    )
+
     return ScrapedProductResponse(
         source_url=product.url,
         scraped_name=scraped_product.name,
@@ -210,6 +222,8 @@ def scrape_product(
         available=scraped_product.available,
         history_id=price_history.id,
         checked_at=price_history.checked_at,
+        alert_triggered=price_alert.alert_triggered,
+        alert_message=price_alert.alert_message,
     )
 
 
@@ -240,3 +254,54 @@ def list_product_price_history(
     )
 
     return histories
+
+
+@app.get(
+    "/products/{product_id}/alert",
+    response_model=PriceAlertResponse,
+    tags=["Alertas"],
+    summary="Verificar alerta de preço do produto",
+    description=(
+        "Verifica se o último preço coletado para o produto atingiu ou ficou abaixo "
+        "do preço-alvo cadastrado."
+    ),
+)
+def get_product_price_alert(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    latest_history = (
+        db.query(PriceHistory)
+        .filter(PriceHistory.product_id == product_id)
+        .order_by(PriceHistory.checked_at.desc())
+        .first()
+    )
+
+    if latest_history is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nenhum preço foi coletado para este produto ainda.",
+        )
+
+    alert_service = AlertService()
+    price_alert = alert_service.check_price_alert(
+        current_price=latest_history.price,
+        target_price=product.target_price,
+    )
+
+    return PriceAlertResponse(
+        alert_triggered=price_alert.alert_triggered,
+        alert_message=price_alert.alert_message,
+        product_id=product.id,
+        product_name=product.name,
+        target_price=product.target_price,
+        current_price=latest_history.price,
+    )

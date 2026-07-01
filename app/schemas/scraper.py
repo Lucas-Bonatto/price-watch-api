@@ -10,3 +10,5 @@ class ScrapedProductResponse(BaseModel):
     available: bool = Field(description="Indica se o produto está disponível.")
     history_id: int = Field(description="ID do registro salvo no histórico de preços.")
     checked_at: datetime = Field(description="Data e hora em que a coleta foi salva.")
+    alert_triggered: bool = Field(description="Indica se o alerta de preço foi disparado.")
+    alert_message: str = Field(description="Mensagem do alerta de preço.")
