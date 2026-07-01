@@ -3,7 +3,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
+from app.models.price_history import PriceHistory
 from app.models.product import Product
+from app.schemas.price_history import PriceHistoryResponse
 from app.schemas.product import ProductCreate, ProductResponse
 from app.schemas.scraper import ScrapedProductResponse
 from app.scrapers.product_scraper import ProductScraper, ScraperError
@@ -14,6 +16,10 @@ tags_metadata = [
     {
         "name": "Produtos",
         "description": "Operações para cadastro, consulta, remoção e coleta de dados de produtos monitorados.",
+    },
+    {
+        "name": "Histórico",
+        "description": "Operações para consultar o histórico de preços coletados.",
     },
     {
         "name": "Sistema",
@@ -148,6 +154,7 @@ def delete_product(
             detail="Produto não encontrado.",
         )
 
+    db.query(PriceHistory).filter(PriceHistory.product_id == product_id).delete()
     db.delete(product)
     db.commit()
 
@@ -160,8 +167,8 @@ def delete_product(
     tags=["Produtos"],
     summary="Coletar dados atuais do produto",
     description=(
-        "Acessa a URL cadastrada para o produto e tenta coletar nome, preço "
-        "e disponibilidade diretamente da página."
+        "Acessa a URL cadastrada para o produto, coleta nome, preço e disponibilidade, "
+        "e salva o preço encontrado no histórico."
     ),
 )
 def scrape_product(
@@ -186,9 +193,50 @@ def scrape_product(
             detail=str(error),
         ) from error
 
+    price_history = PriceHistory(
+        product_id=product.id,
+        price=scraped_product.price,
+        available=scraped_product.available,
+    )
+
+    db.add(price_history)
+    db.commit()
+    db.refresh(price_history)
+
     return ScrapedProductResponse(
         source_url=product.url,
         scraped_name=scraped_product.name,
         current_price=scraped_product.price,
         available=scraped_product.available,
+        history_id=price_history.id,
+        checked_at=price_history.checked_at,
     )
+
+
+@app.get(
+    "/products/{product_id}/history",
+    response_model=list[PriceHistoryResponse],
+    tags=["Histórico"],
+    summary="Listar histórico de preços do produto",
+    description="Retorna todos os preços já coletados para um produto específico.",
+)
+def list_product_price_history(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    histories = (
+        db.query(PriceHistory)
+        .filter(PriceHistory.product_id == product_id)
+        .order_by(PriceHistory.checked_at.desc())
+        .all()
+    )
+
+    return histories
