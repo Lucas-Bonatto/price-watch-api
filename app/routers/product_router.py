@@ -1,0 +1,203 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.price_history import PriceHistory
+from app.models.product import Product
+from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
+from app.schemas.scraper import ScrapedProductResponse
+from app.scrapers.product_scraper import ProductScraper, ScraperError
+from app.services.alert_service import AlertService
+
+router = APIRouter(tags=["Produtos"])
+
+
+@router.post(
+    "/products",
+    response_model=ProductResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Cadastrar produto",
+    description=(
+        "Cadastra um novo produto para monitoramento. "
+        "A URL deve ser única e o preço-alvo deve ser maior que zero."
+    ),
+)
+def create_product(
+    product_data: ProductCreate,
+    db: Session = Depends(get_db),
+):
+    product = Product(
+        url=str(product_data.url),
+        name=product_data.name,
+        target_price=product_data.target_price,
+    )
+
+    db.add(product)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Já existe um produto cadastrado com essa URL.",
+        )
+
+    db.refresh(product)
+
+    return product
+
+
+@router.get(
+    "/products",
+    response_model=list[ProductResponse],
+    summary="Listar produtos",
+    description="Retorna todos os produtos cadastrados para monitoramento.",
+)
+def list_products(db: Session = Depends(get_db)):
+    products = db.query(Product).order_by(Product.id).all()
+
+    return products
+
+
+@router.get(
+    "/products/{product_id}",
+    response_model=ProductResponse,
+    summary="Buscar produto por ID",
+    description="Retorna os dados de um produto específico a partir do seu identificador.",
+)
+def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    return product
+
+
+@router.patch(
+    "/products/{product_id}",
+    response_model=ProductResponse,
+    summary="Atualizar produto",
+    description=(
+        "Atualiza parcialmente os dados de um produto. "
+        "É possível alterar nome, preço-alvo e status de monitoramento."
+    ),
+)
+def update_product(
+    product_id: int,
+    product_data: ProductUpdate,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    if product_data.name is not None:
+        product.name = product_data.name
+
+    if product_data.target_price is not None:
+        product.target_price = product_data.target_price
+
+    if product_data.is_active is not None:
+        product.is_active = product_data.is_active
+
+    db.commit()
+    db.refresh(product)
+
+    return product
+
+
+@router.delete(
+    "/products/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remover produto",
+    description="Remove um produto cadastrado a partir do seu identificador.",
+)
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    db.query(PriceHistory).filter(PriceHistory.product_id == product_id).delete()
+    db.delete(product)
+    db.commit()
+
+    return None
+
+
+@router.post(
+    "/products/{product_id}/scrape",
+    response_model=ScrapedProductResponse,
+    summary="Coletar dados atuais do produto",
+    description=(
+        "Acessa a URL cadastrada para o produto, coleta nome, preço e disponibilidade, "
+        "salva o preço encontrado no histórico e verifica se o preço-alvo foi atingido."
+    ),
+)
+def scrape_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto não encontrado.",
+        )
+
+    scraper = ProductScraper()
+
+    try:
+        scraped_product = scraper.scrape(product.url)
+    except ScraperError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+
+    price_history = PriceHistory(
+        product_id=product.id,
+        price=scraped_product.price,
+        available=scraped_product.available,
+    )
+
+    db.add(price_history)
+    db.commit()
+    db.refresh(price_history)
+
+    alert_service = AlertService()
+    price_alert = alert_service.check_price_alert(
+        current_price=scraped_product.price,
+        target_price=product.target_price,
+    )
+
+    return ScrapedProductResponse(
+        source_url=product.url,
+        scraped_name=scraped_product.name,
+        current_price=scraped_product.price,
+        available=scraped_product.available,
+        history_id=price_history.id,
+        checked_at=price_history.checked_at,
+        alert_triggered=price_alert.alert_triggered,
+        alert_message=price_alert.alert_message,
+    )
