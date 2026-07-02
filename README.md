@@ -1,36 +1,36 @@
-# API de Monitoramento de Preços
-
-![Tests](https://github.com/Lucas-Bonatto/price-watch-api/actions/workflows/tests.yml/badge.svg)
+# API de Monitoramento de Preços ![Tests](https://github.com/Lucas-Bonatto/price-watch-api/actions/workflows/tests.yml/badge.svg)
 
 API desenvolvida em Python para cadastrar produtos, coletar preços via web scraping, salvar histórico de preços e verificar alertas quando o preço atual atingir ou ficar abaixo do preço desejado.
 
-Este projeto simula um cenário real de backend, com organização em camadas, banco de dados, documentação automática, tratamento de erros e testes automatizados.
+Este projeto simula um cenário real de backend, com organização em camadas, banco de dados, documentação automática, tratamento de erros, persistência de dados e testes automatizados.
 
 ## Funcionalidades
 
-- Cadastro de produtos para monitoramento
-- Listagem de produtos cadastrados
-- Busca de produto por ID
-- Atualização parcial de produto
-- Remoção de produto
-- Coleta de dados via web scraping
-- Salvamento de histórico de preços
-- Consulta de histórico por produto
-- Verificação de alerta de preço
-- Documentação automática com Swagger
-- Testes automatizados com Pytest
+* Cadastro de produtos para monitoramento
+* Listagem de produtos cadastrados
+* Busca de produto por ID
+* Atualização parcial de produto
+* Remoção de produto
+* Coleta de dados via web scraping
+* Salvamento de histórico de preços
+* Consulta de histórico por produto
+* Verificação de alerta de preço
+* Documentação automática com Swagger
+* Testes automatizados com Pytest
+* Execução automática dos testes com GitHub Actions
 
 ## Tecnologias utilizadas
 
-- Python
-- FastAPI
-- SQLAlchemy
-- SQLite
-- Pydantic
-- Requests
-- BeautifulSoup4
-- Pytest
-- Uvicorn
+* Python
+* FastAPI
+* SQLAlchemy
+* SQLite
+* Pydantic
+* Requests
+* BeautifulSoup4
+* Pytest
+* Uvicorn
+* GitHub Actions
 
 ## Estrutura do projeto
 
@@ -61,6 +61,9 @@ price-watch-api/
 │   ├── test_alert_service.py
 │   ├── test_product_routes.py
 │   └── test_system_routes.py
+├── .github/
+│   └── workflows/
+│       └── tests.yml
 ├── .gitignore
 ├── README.md
 └── requirements.txt
@@ -117,33 +120,33 @@ http://127.0.0.1:8000/docs
 
 ### Sistema
 
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/` | Página inicial da API |
-| GET | `/health` | Verifica se a API está funcionando |
+| Método | Rota      | Descrição                          |
+| ------ | --------- | ---------------------------------- |
+| GET    | `/`       | Página inicial da API              |
+| GET    | `/health` | Verifica se a API está funcionando |
 
 ### Produtos
 
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/products` | Cadastra um novo produto |
-| GET | `/products` | Lista todos os produtos |
-| GET | `/products/{product_id}` | Busca um produto por ID |
-| PATCH | `/products/{product_id}` | Atualiza parcialmente um produto |
-| DELETE | `/products/{product_id}` | Remove um produto |
-| POST | `/products/{product_id}/scrape` | Coleta dados atuais do produto |
+| Método | Rota                            | Descrição                        |
+| ------ | ------------------------------- | -------------------------------- |
+| POST   | `/products`                     | Cadastra um novo produto         |
+| GET    | `/products`                     | Lista todos os produtos          |
+| GET    | `/products/{product_id}`        | Busca um produto por ID          |
+| PATCH  | `/products/{product_id}`        | Atualiza parcialmente um produto |
+| DELETE | `/products/{product_id}`        | Remove um produto                |
+| POST   | `/products/{product_id}/scrape` | Coleta dados atuais do produto   |
 
 ### Histórico
 
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/products/{product_id}/history` | Lista o histórico de preços do produto |
+| Método | Rota                             | Descrição                              |
+| ------ | -------------------------------- | -------------------------------------- |
+| GET    | `/products/{product_id}/history` | Lista o histórico de preços do produto |
 
 ### Alertas
 
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/products/{product_id}/alert` | Verifica se o produto atingiu o preço desejado |
+| Método | Rota                           | Descrição                                      |
+| ------ | ------------------------------ | ---------------------------------------------- |
+| GET    | `/products/{product_id}/alert` | Verifica se o produto atingiu o preço desejado |
 
 ## Exemplo de cadastro de produto
 
@@ -197,6 +200,8 @@ Resultado esperado:
 11 passed
 ```
 
+Os testes também são executados automaticamente no GitHub Actions a cada alteração enviada para o repositório.
+
 ## Banco de dados
 
 O projeto usa SQLite para facilitar a execução local.
@@ -211,33 +216,32 @@ Esse arquivo não é versionado no GitHub, pois está incluído no `.gitignore`.
 
 ## Boas práticas aplicadas
 
-- Separação de responsabilidades em routers, schemas, models, services e scrapers
-- Uso de ORM com SQLAlchemy
-- Validação de dados com Pydantic
-- Tratamento de erros com HTTPException
-- Banco separado para testes
-- Testes automatizados com Pytest
-- Documentação automática da API
-- Histórico de preços persistido em banco
-- Serviço separado para regra de alerta
-- Uso de `.gitignore` para evitar versionar ambiente virtual, cache e banco local
+* Separação de responsabilidades em routers, schemas, models, services e scrapers
+* Uso de ORM com SQLAlchemy
+* Validação de dados com Pydantic
+* Tratamento de erros com HTTPException
+* Banco separado para testes
+* Testes automatizados com Pytest
+* Execução dos testes com GitHub Actions
+* Documentação automática da API
+* Histórico de preços persistido em banco
+* Serviço separado para regra de alerta
+* Uso de `.gitignore` para evitar versionar ambiente virtual, cache e banco local
 
 ## Roadmap
 
-- Adicionar envio de alertas por e-mail
-- Adicionar integração com Telegram
-- Criar autenticação de usuários
-- Criar agendamento automático de scraping
-- Adicionar Docker
-- Adicionar GitHub Actions para rodar testes automaticamente
-- Migrar de SQLite para PostgreSQL
-- Melhorar suporte a diferentes sites com seletores configuráveis
+* Adicionar envio de alertas por e-mail
+* Adicionar integração com Telegram
+* Criar autenticação de usuários
+* Criar agendamento automático de scraping
+* Migrar de SQLite para PostgreSQL
+* Melhorar suporte a diferentes sites com seletores configuráveis
 
 ## Status do projeto
 
-Em desenvolvimento.
+Projeto funcional em versão local.
 
-A versão atual já possui API funcional, scraping, histórico de preços, alertas, atualização de produtos, organização em routers e testes automatizados.
+A versão atual já possui API funcional, scraping, histórico de preços, alertas, atualização de produtos, organização em camadas, testes automatizados e integração com GitHub Actions.
 
 ## Autor
 
@@ -245,4 +249,4 @@ Desenvolvido por Lucas Bonatto.
 
 GitHub: [Lucas-Bonatto](https://github.com/Lucas-Bonatto)
 
-Contato: lucas.jorchuabonatto@gmail.com
+Contato: [lucas.jorchuabonatto@gmail.com](mailto:lucas.jorchuabonatto@gmail.com)
