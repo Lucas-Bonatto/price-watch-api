@@ -13,6 +13,7 @@ versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 * conjunto determinístico e idempotente de produtos e históricos de exemplo;
 * configuração do banco por variável de ambiente;
 * cabeçalho `X-Demo-Mode` e identificação do modo nas rotas de sistema;
+* detecção automática de implantações na Vercel com possibilidade de sobrescrita;
 * testes de integração para leitura pública e bloqueio de mutações.
 
 ### Segurança
