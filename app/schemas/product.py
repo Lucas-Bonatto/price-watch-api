@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+
+from app.security.url_policy import UnsafeUrlError, validate_url_structure
 
 
 class ProductCreate(BaseModel):
@@ -8,7 +10,7 @@ class ProductCreate(BaseModel):
         title="Dados para cadastro de produto",
         json_schema_extra={
             "example": {
-                "url": "https://example.com/produto-teste",
+                "url": "https://books.toscrape.com/produto-teste",
                 "name": "Notebook Gamer",
                 "target_price": 3500,
             }
@@ -27,6 +29,16 @@ class ProductCreate(BaseModel):
         gt=0,
         description="Preço desejado para disparar o alerta.",
     )
+
+    @field_validator("url")
+    @classmethod
+    def validate_monitored_url(cls, url: HttpUrl) -> HttpUrl:
+        try:
+            validate_url_structure(str(url))
+        except UnsafeUrlError as error:
+            raise ValueError(str(error)) from error
+
+        return url
 
 
 class ProductUpdate(BaseModel):
@@ -65,6 +77,10 @@ class ProductResponse(BaseModel):
     url: str = Field(description="URL do produto monitorado.")
     name: str = Field(description="Nome do produto.")
     target_price: float = Field(description="Preço desejado para alerta.")
-    is_active: bool = Field(description="Indica se o produto está ativo para monitoramento.")
+    is_active: bool = Field(
+        description="Indica se o produto está ativo para monitoramento."
+    )
     created_at: datetime = Field(description="Data e hora de cadastro do produto.")
-    updated_at: datetime = Field(description="Data e hora da última atualização do produto.")
+    updated_at: datetime = Field(
+        description="Data e hora da última atualização do produto."
+    )

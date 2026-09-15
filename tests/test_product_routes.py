@@ -2,7 +2,7 @@ def test_should_create_product(client):
     response = client.post(
         "/products",
         json={
-            "url": "https://example.com/produto-teste",
+            "url": "https://books.toscrape.com/produto-teste",
             "name": "Produto Teste",
             "target_price": 100,
         },
@@ -13,7 +13,7 @@ def test_should_create_product(client):
     data = response.json()
 
     assert data["id"] == 1
-    assert data["url"] == "https://example.com/produto-teste"
+    assert data["url"] == "https://books.toscrape.com/produto-teste"
     assert data["name"] == "Produto Teste"
     assert data["target_price"] == 100
     assert data["is_active"] is True
@@ -25,7 +25,7 @@ def test_should_list_products(client):
     client.post(
         "/products",
         json={
-            "url": "https://example.com/produto-listagem",
+            "url": "https://books.toscrape.com/produto-listagem",
             "name": "Produto Listagem",
             "target_price": 150,
         },
@@ -46,7 +46,7 @@ def test_should_get_product_by_id(client):
     create_response = client.post(
         "/products",
         json={
-            "url": "https://example.com/produto-busca",
+            "url": "https://books.toscrape.com/produto-busca",
             "name": "Produto Busca",
             "target_price": 200,
         },
@@ -78,7 +78,7 @@ def test_should_update_product(client):
     create_response = client.post(
         "/products",
         json={
-            "url": "https://example.com/produto-atualizar",
+            "url": "https://books.toscrape.com/produto-atualizar",
             "name": "Produto Antigo",
             "target_price": 100,
         },
@@ -109,7 +109,7 @@ def test_should_delete_product(client):
     create_response = client.post(
         "/products",
         json={
-            "url": "https://example.com/produto-remover",
+            "url": "https://books.toscrape.com/produto-remover",
             "name": "Produto Remover",
             "target_price": 300,
         },
@@ -124,3 +124,49 @@ def test_should_delete_product(client):
     get_response = client.get(f"/products/{product_id}")
 
     assert get_response.status_code == 404
+
+
+def test_should_reject_unlisted_product_host(client):
+    response = client.post(
+        "/products",
+        json={
+            "url": "https://example.com/produto",
+            "name": "Produto Externo",
+            "target_price": 100,
+        },
+    )
+
+    assert response.status_code == 422
+    assert "não está autorizado" in response.json()["detail"][0]["msg"]
+
+
+def test_should_reject_local_product_address(client):
+    response = client.post(
+        "/products",
+        json={
+            "url": "https://127.0.0.1/admin",
+            "name": "Endereço Local",
+            "target_price": 100,
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Endereços IP literais" in response.json()["detail"][0]["msg"]
+
+
+def test_scrape_should_block_unsafe_url_already_stored_in_database(client, db_session):
+    from app.models.product import Product
+
+    product = Product(
+        url="https://127.0.0.1/admin",
+        name="Registro legado inseguro",
+        target_price=100,
+    )
+    db_session.add(product)
+    db_session.commit()
+    db_session.refresh(product)
+
+    response = client.post(f"/products/{product.id}/scrape")
+
+    assert response.status_code == 400
+    assert "URL bloqueada pela política de segurança" in response.json()["detail"]
