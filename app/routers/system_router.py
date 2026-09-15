@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["Sistema"])
 
@@ -8,11 +8,16 @@ router = APIRouter(tags=["Sistema"])
     summary="Página inicial da API",
     description="Retorna uma mensagem simples informando que a API está funcionando.",
 )
-def root():
-    return {
+def root(request: Request):
+    response = {
         "message": "API de Monitoramento de Preços está funcionando!",
         "docs": "/docs",
     }
+
+    if request.app.state.demo_read_only:
+        response["demo_mode"] = "read-only"
+
+    return response
 
 
 @router.get(
@@ -20,7 +25,12 @@ def root():
     summary="Verificar saúde da API",
     description="Verifica se a aplicação está ativa e respondendo corretamente.",
 )
-def health_check():
-    return {
+def health_check(request: Request):
+    response = {
         "status": "ok",
     }
+
+    if request.app.state.demo_read_only:
+        response["demo_mode"] = "read-only"
+
+    return response
