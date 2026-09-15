@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
-from app.main import app
+from app.demo import seed_demo_data
+from app.main import app, create_app
 
 
 TEST_DATABASE_URL = "sqlite://"
@@ -50,3 +51,22 @@ def client(db_session):
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def demo_client(db_session):
+    seed_demo_data(db_session)
+    demo_app = create_app(demo_read_only=True)
+
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    demo_app.dependency_overrides[get_db] = override_get_db
+
+    with TestClient(demo_app) as test_client:
+        yield test_client
+
+    demo_app.dependency_overrides.clear()

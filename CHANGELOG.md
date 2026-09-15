@@ -5,6 +5,21 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o
 versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-09-15
+
+### Adicionado
+
+* modo de demonstração pública somente para leitura;
+* conjunto determinístico e idempotente de produtos e históricos de exemplo;
+* configuração do banco por variável de ambiente;
+* cabeçalho `X-Demo-Mode` e identificação do modo nas rotas de sistema;
+* testes de integração para leitura pública e bloqueio de mutações.
+
+### Segurança
+
+* bloqueio global de métodos mutáveis no modo público, incluindo a coleta externa;
+* banco SQLite em memória por padrão no modo de demonstração, sem dados duráveis de visitantes.
+
 ## [0.2.0] - 2026-09-09
 
 ### Adicionado

@@ -1,6 +1,11 @@
-from fastapi import FastAPI
+from collections.abc import Awaitable, Callable
 
-from app.database import Base, engine
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse, Response
+
+from app.config import public_demo_enabled
+from app.database import Base, SessionLocal, engine
+from app.demo import seed_demo_data
 from app.models.price_history import PriceHistory
 from app.models.product import Product
 from app.routers.alert_router import router as alert_router
@@ -10,8 +15,6 @@ from app.routers.system_router import router as system_router
 
 # Garante que os modelos sejam carregados antes de criar as tabelas.
 MODELS = (Product, PriceHistory)
-
-Base.metadata.create_all(bind=engine)
 
 tags_metadata = [
     {
@@ -32,17 +35,69 @@ tags_metadata = [
     },
 ]
 
-app = FastAPI(
-    title="API de Monitoramento de Preços",
-    description=(
-        "API para cadastrar produtos, monitorar preços, armazenar histórico "
-        "e futuramente enviar alertas quando o preço cair abaixo do valor desejado."
-    ),
-    version="0.2.0",
-    openapi_tags=tags_metadata,
+DEMO_BLOCK_MESSAGE = (
+    "Demonstração pública em modo somente leitura. Operações de criação, "
+    "atualização, exclusão e coleta externa estão desabilitadas."
 )
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
-app.include_router(system_router)
-app.include_router(product_router)
-app.include_router(history_router)
-app.include_router(alert_router)
+
+def create_app(*, demo_read_only: bool | None = None) -> FastAPI:
+    if demo_read_only is None:
+        demo_read_only = public_demo_enabled()
+
+    description = (
+        "API para cadastrar produtos, monitorar preços, armazenar histórico "
+        "e verificar alertas quando o preço cair abaixo do valor desejado."
+    )
+
+    if demo_read_only:
+        description += (
+            " Esta implantação é uma demonstração pública somente para leitura, "
+            "com dados de exemplo e operações mutáveis desabilitadas."
+        )
+
+    application = FastAPI(
+        title="API de Monitoramento de Preços",
+        description=description,
+        version="0.3.0",
+        openapi_tags=tags_metadata,
+    )
+    application.state.demo_read_only = demo_read_only
+
+    @application.middleware("http")
+    async def enforce_public_demo_read_only(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        if demo_read_only and request.method.upper() not in SAFE_METHODS:
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"detail": DEMO_BLOCK_MESSAGE},
+                headers={"X-Demo-Mode": "read-only"},
+            )
+
+        response = await call_next(request)
+
+        if demo_read_only:
+            response.headers["X-Demo-Mode"] = "read-only"
+
+        return response
+
+    application.include_router(system_router)
+    application.include_router(product_router)
+    application.include_router(history_router)
+    application.include_router(alert_router)
+
+    return application
+
+
+DEMO_READ_ONLY = public_demo_enabled()
+
+Base.metadata.create_all(bind=engine)
+
+if DEMO_READ_ONLY:
+    with SessionLocal() as demo_session:
+        seed_demo_data(demo_session)
+
+app = create_app(demo_read_only=DEMO_READ_ONLY)

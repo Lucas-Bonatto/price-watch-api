@@ -19,6 +19,7 @@ Este projeto simula um cenário real de backend, com organização em camadas, b
 * Testes automatizados com Pytest
 * Execução automática dos testes com GitHub Actions
 * Proteção contra Server-Side Request Forgery (SSRF)
+* Modo público somente para leitura com dados de demonstração
 
 ## Tecnologias utilizadas
 
@@ -32,6 +33,7 @@ Este projeto simula um cenário real de backend, com organização em camadas, b
 * Pytest
 * Uvicorn
 * GitHub Actions
+* Vercel
 
 ## Estrutura do projeto
 
@@ -57,7 +59,9 @@ price-watch-api/
 │   │   └── url_policy.py
 │   ├── services/
 │   │   └── alert_service.py
+│   ├── config.py
 │   ├── database.py
+│   ├── demo.py
 │   └── main.py
 ├── tests/
 │   ├── conftest.py
@@ -69,6 +73,7 @@ price-watch-api/
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
+├── .env.example
 ├── .gitignore
 ├── README.md
 └── requirements.txt
@@ -136,6 +141,26 @@ Acesse a documentação automática:
 ```text
 http://127.0.0.1:8000/docs
 ```
+
+## Demonstração pública segura
+
+A aplicação pode ser publicada como uma demonstração navegável pelo Swagger, sem
+expor operações perigosas. Defina a variável abaixo no ambiente de hospedagem:
+
+```text
+PRICE_WATCH_DEMO_READ_ONLY=true
+```
+
+Nesse modo, a API:
+
+* cria dois produtos e cinco registros de preço de exemplo;
+* mantém `GET`, `HEAD` e `OPTIONS` disponíveis;
+* responde com `403 Forbidden` para criação, atualização, exclusão e scraping;
+* inclui `X-Demo-Mode: read-only` nas respostas;
+* usa SQLite em memória por padrão, adequado a uma demonstração sem dados duráveis.
+
+Assim, um recrutador pode consultar produtos, históricos e alertas em `/docs`, mas
+não consegue alterar dados nem fazer a aplicação acessar URLs externas.
 
 ## Endpoints principais
 
@@ -218,7 +243,7 @@ pytest
 Resultado esperado:
 
 ```text
-35 passed
+42 passed
 ```
 
 Os testes também são executados automaticamente no GitHub Actions a cada alteração enviada para o repositório.
@@ -245,7 +270,9 @@ código da aplicação.
 
 ## Banco de dados
 
-O projeto usa SQLite para facilitar a execução local.
+O projeto usa SQLite para facilitar a execução local. A URL pode ser configurada por
+`DATABASE_URL`; sem essa variável, o modo local usa `sqlite:///./price_watch.db` e o
+modo público somente para leitura usa um banco SQLite em memória.
 
 O arquivo do banco é criado automaticamente ao rodar a aplicação:
 
@@ -266,6 +293,7 @@ Esse arquivo não é versionado no GitHub, pois está incluído no `.gitignore`.
 * Validação defensiva das conexões externas do scraper
 * Execução dos testes com GitHub Actions
 * Documentação automática da API
+* Demonstração pública isolada e somente para leitura
 * Histórico de preços persistido em banco
 * Serviço separado para regra de alerta
 * Uso de `.gitignore` para evitar versionar ambiente virtual, cache e banco local
@@ -281,7 +309,7 @@ Esse arquivo não é versionado no GitHub, pois está incluído no `.gitignore`.
 
 ## Status do projeto
 
-Projeto funcional em versão local.
+Projeto funcional localmente e preparado para uma demonstração pública segura.
 
 A versão atual já possui API funcional, scraping, histórico de preços, alertas, atualização de produtos, organização em camadas, testes automatizados e integração com GitHub Actions.
 
