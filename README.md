@@ -145,11 +145,14 @@ http://127.0.0.1:8000/docs
 ## Demonstração pública segura
 
 A aplicação pode ser publicada como uma demonstração navegável pelo Swagger, sem
-expor operações perigosas. Defina a variável abaixo no ambiente de hospedagem:
+expor operações perigosas. Na Vercel, o modo somente para leitura é ativado
+automaticamente. Em outros provedores, defina a variável abaixo no ambiente:
 
 ```text
 PRICE_WATCH_DEMO_READ_ONLY=true
 ```
+
+Uma configuração explícita sempre prevalece sobre a detecção automática do ambiente.
 
 Nesse modo, a API:
 
@@ -243,7 +246,7 @@ pytest
 Resultado esperado:
 
 ```text
-42 passed
+45 passed
 ```
 
 Os testes também são executados automaticamente no GitHub Actions a cada alteração enviada para o repositório.
