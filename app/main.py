@@ -38,7 +38,7 @@ app = FastAPI(
         "API para cadastrar produtos, monitorar preços, armazenar histórico "
         "e futuramente enviar alertas quando o preço cair abaixo do valor desejado."
     ),
-    version="0.1.0",
+    version="0.2.0",
     openapi_tags=tags_metadata,
 )
 

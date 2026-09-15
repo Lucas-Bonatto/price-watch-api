@@ -8,6 +8,7 @@ from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
 from app.schemas.scraper import ScrapedProductResponse
 from app.scrapers.product_scraper import ProductScraper, ScraperError
+from app.security.url_policy import UnsafeUrlError
 from app.services.alert_service import AlertService
 
 router = APIRouter(tags=["Produtos"])
@@ -169,6 +170,11 @@ def scrape_product(
 
     try:
         scraped_product = scraper.scrape(product.url)
+    except UnsafeUrlError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"URL bloqueada pela política de segurança: {error}",
+        ) from error
     except ScraperError as error:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

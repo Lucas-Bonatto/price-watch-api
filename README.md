@@ -18,6 +18,7 @@ Este projeto simula um cenário real de backend, com organização em camadas, b
 * Documentação automática com Swagger
 * Testes automatizados com Pytest
 * Execução automática dos testes com GitHub Actions
+* Proteção contra Server-Side Request Forgery (SSRF)
 
 ## Tecnologias utilizadas
 
@@ -52,6 +53,8 @@ price-watch-api/
 │   │   └── scraper.py
 │   ├── scrapers/
 │   │   └── product_scraper.py
+│   ├── security/
+│   │   └── url_policy.py
 │   ├── services/
 │   │   └── alert_service.py
 │   ├── database.py
@@ -60,6 +63,8 @@ price-watch-api/
 │   ├── conftest.py
 │   ├── test_alert_service.py
 │   ├── test_product_routes.py
+│   ├── test_product_scraper.py
+│   ├── test_url_policy.py
 │   └── test_system_routes.py
 ├── .github/
 │   └── workflows/
@@ -102,6 +107,22 @@ Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Defina os hosts que a aplicação poderá monitorar. A lista é exata e separada por
+vírgulas; subdomínios precisam ser incluídos individualmente. Se a variável não for
+definida, somente `books.toscrape.com` será permitido.
+
+No Windows PowerShell:
+
+```powershell
+$env:PRICE_WATCH_ALLOWED_HOSTS="books.toscrape.com,loja.exemplo.com"
+```
+
+No Linux/macOS:
+
+```bash
+export PRICE_WATCH_ALLOWED_HOSTS="books.toscrape.com,loja.exemplo.com"
 ```
 
 Rode a API:
@@ -197,10 +218,30 @@ pytest
 Resultado esperado:
 
 ```text
-11 passed
+35 passed
 ```
 
 Os testes também são executados automaticamente no GitHub Actions a cada alteração enviada para o repositório.
+
+## Segurança do scraper
+
+Toda URL é verificada no cadastro e novamente imediatamente antes de cada acesso.
+O cliente HTTP aplica os seguintes controles:
+
+* somente HTTPS na porta padrão 443;
+* allowlist exata de hosts configurada por `PRICE_WATCH_ALLOWED_HOSTS`;
+* rejeição de credenciais embutidas e endereços IP literais;
+* resolução IPv4 e IPv6 com bloqueio de IPs privados, locais, link-local, reservados e não roteáveis;
+* redirecionamentos manuais, limitados e revalidados antes do próximo acesso;
+* desativação de proxies herdados do ambiente;
+* timeouts separados de conexão e leitura;
+* aceitação exclusiva de HTML/XHTML;
+* leitura em streaming limitada a 2 MiB, inclusive quando o servidor omite ou falsifica `Content-Length`.
+
+Esses controles reduzem a superfície de SSRF na aplicação. Em produção, use também
+regras de saída na rede ou no provedor de hospedagem para impedir conexões com redes
+internas e endpoints de metadata; segurança de egress não deve depender apenas do
+código da aplicação.
 
 ## Banco de dados
 
@@ -222,6 +263,7 @@ Esse arquivo não é versionado no GitHub, pois está incluído no `.gitignore`.
 * Tratamento de erros com HTTPException
 * Banco separado para testes
 * Testes automatizados com Pytest
+* Validação defensiva das conexões externas do scraper
 * Execução dos testes com GitHub Actions
 * Documentação automática da API
 * Histórico de preços persistido em banco
