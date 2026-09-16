@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Demonstração pública da API Radar de Preços, criada com FastAPI para monitorar produtos, histórico de preços e alertas."
+    />
+    <meta name="theme-color" content="#fbfaf7" />
+    <title>Radar de Preços | API de Monitoramento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
+    <link rel="stylesheet" href="/static/styles.css?v=3" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+      defer
+    ></script>
+    <script src="/static/app.js?v=3" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+    <header class="site-header" aria-label="Cabeçalho principal">
+      <div class="header-inner">
+        <a class="brand" href="#inicio" aria-label="Radar de Preços, início">
+          <i class="ph ph-chart-bar" aria-hidden="true"></i>
+          <strong>Radar de <em>Preços</em></strong>
+          <span>API de Monitoramento de Preços</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Navegação principal">
+          <a class="is-active" href="#inicio">Início</a>
+          <a href="/docs">Documentação</a>
+          <a href="https://github.com/Lucas-Bonatto/price-watch-api">GitHub</a>
+          <a href="#capacidades">Sobre</a>
+        </nav>
+
+        <div class="header-status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="header-status-text">API online</span>
+        </div>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="hero" id="inicio" aria-labelledby="titulo-principal">
+        <div class="hero-copy">
+          <h1 id="titulo-principal">
+            Uma API que transforma preços em <em>sinais</em><span>.</span>
+          </h1>
+          <p class="hero-lead">
+            Cadastre produtos, monitore preços, armazene o histórico e receba
+            alertas quando o valor cair abaixo da meta desejada.
+          </p>
+          <p class="hero-note">
+            Esta é uma demonstração pública somente para leitura, com dados de
+            exemplo e operações mutáveis desabilitadas.
+          </p>
+          <p class="eyebrow hero-stack">FastAPI • SQLAlchemy • Pytest • versão 0.3.0</p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="/docs">
+              <i class="ph ph-book-open" aria-hidden="true"></i>
+              <span>Explorar documentação<small>/docs</small></span>
+              <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </a>
+            <a
+              class="button button-quiet"
+              href="https://github.com/Lucas-Bonatto/price-watch-api"
+            >
+              <i class="ph ph-github-logo" aria-hidden="true"></i>
+              <span>Ver código no GitHub</span>
+              <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </a>
+          </div>
+
+          <div class="trust-row">
+            <div class="trust-item">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span><strong id="api-status-text">API online</strong><small>Funcionando normalmente</small></span>
+            </div>
+            <div class="trust-item">
+              <i class="ph ph-lock-key" aria-hidden="true"></i>
+              <span><strong>Demo segura • somente leitura</strong><small>Dados de exemplo • alterações desabilitadas</small></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-story" id="historico" aria-labelledby="titulo-historico">
+          <p class="eyebrow">Exemplo real</p>
+          <div class="data-heading">
+            <div>
+              <h2 id="titulo-historico">Do monitoramento à decisão.</h2>
+              <p>Acompanhe a variação de preços e receba alertas no momento certo.</p>
+            </div>
+            <span class="section-label">Histórico de preços</span>
+          </div>
+
+          <figure class="chart-panel">
+            <div class="chart-wrap">
+              <canvas
+                id="price-chart"
+                role="img"
+                aria-label="Gráfico do histórico de preços do produto em demonstração"
+              ></canvas>
+              <div class="chart-callout" aria-live="polite">
+                <span id="latest-date">10 set</span>
+                <strong id="latest-price">R$ 39,99</strong>
+              </div>
+            </div>
+            <figcaption>
+              <span id="product-name">A Light in the Attic</span>
+              <span>Meta: <strong id="target-price">R$ 40,00</strong></span>
+              <span class="alert-chip" id="alert-chip">Meta atingida</span>
+            </figcaption>
+          </figure>
+
+          <div class="api-proof">
+            <div class="endpoint-proof">
+              <span class="proof-label">Endpoint de exemplo</span>
+              <code><b>GET</b> /products/1/history</code>
+              <p>Consulta o histórico de preços de um produto.</p>
+            </div>
+            <div class="response-proof">
+              <div class="response-heading">
+                <span class="proof-label">Resposta (trecho)</span>
+                <button id="copy-response" type="button">
+                  <i class="ph ph-copy" aria-hidden="true"></i>
+                  <span>Copiar</span>
+                </button>
+              </div>
+              <pre><code id="response-code">{
+  "product_id": 1,
+  "prices": [
+    { "price": 51.77, "date": "2026-09-01" },
+    { "price": 39.99, "date": "2026-09-10" }
+  ]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="capabilities" id="capacidades" aria-labelledby="titulo-capacidades">
+        <div class="capabilities-intro">
+          <p class="eyebrow">Capacidades principais</p>
+          <h2 id="titulo-capacidades">
+            Dados confiáveis para <em>melhores decisões</em><span>.</span>
+          </h2>
+        </div>
+
+        <article class="capability">
+          <i class="ph ph-shield-check" aria-hidden="true"></i>
+          <div>
+            <h3>Coleta protegida contra SSRF</h3>
+            <p>Valida endereços, domínios e redirecionamentos antes de cada acesso externo.</p>
+          </div>
+        </article>
+        <article class="capability">
+          <i class="ph ph-database" aria-hidden="true"></i>
+          <div>
+            <h3>Histórico persistido</h3>
+            <p>Armazena os preços coletados para consulta, comparação e análise ao longo do tempo.</p>
+          </div>
+        </article>
+        <article class="capability">
+          <i class="ph ph-bell" aria-hidden="true"></i>
+          <div>
+            <h3>Alertas por preço</h3>
+            <p>Verifica quando o preço cai abaixo da meta e sinaliza o momento certo para agir.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Radar de Preços</strong>
+        <span>API de Monitoramento de Preços</span>
+        <span>Desenvolvido com FastAPI</span>
+      </div>
+      <p>Dados de exemplo • Uso somente para fins de demonstração</p>
+    </footer>
+  </body>
+</html>

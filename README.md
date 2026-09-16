@@ -4,7 +4,9 @@ API desenvolvida em Python para cadastrar produtos, coletar preços via web scra
 
 Este projeto simula um cenário real de backend, com organização em camadas, banco de dados, documentação automática, tratamento de erros, persistência de dados e testes automatizados.
 
-**Demonstração pública:** [abrir a documentação interativa no Swagger](https://price-watch-api.vercel.app/docs)
+**Demonstração pública:** [abrir o Radar de Preços](https://price-watch-api.vercel.app/)
+
+**Documentação interativa:** [explorar os endpoints no Swagger](https://price-watch-api.vercel.app/docs)
 
 ## Funcionalidades
 
@@ -22,6 +24,7 @@ Este projeto simula um cenário real de backend, com organização em camadas, b
 * Execução automática dos testes com GitHub Actions
 * Proteção contra Server-Side Request Forgery (SSRF)
 * Modo público somente para leitura com dados de demonstração
+* Página inicial responsiva com gráfico alimentado pelos endpoints reais da API
 
 ## Tecnologias utilizadas
 
@@ -61,6 +64,10 @@ price-watch-api/
 │   │   └── url_policy.py
 │   ├── services/
 │   │   └── alert_service.py
+│   ├── static/
+│   │   ├── app.js
+│   │   ├── index.html
+│   │   └── styles.css
 │   ├── config.py
 │   ├── database.py
 │   ├── demo.py
@@ -146,8 +153,9 @@ http://127.0.0.1:8000/docs
 
 ## Demonstração pública segura
 
-A demonstração está disponível em
-[price-watch-api.vercel.app/docs](https://price-watch-api.vercel.app/docs).
+A demonstração visual está disponível em
+[price-watch-api.vercel.app](https://price-watch-api.vercel.app/), com acesso à
+[documentação interativa](https://price-watch-api.vercel.app/docs).
 
 A aplicação pode ser publicada como uma demonstração navegável pelo Swagger, sem
 expor operações perigosas. Na Vercel, o modo somente para leitura é ativado
@@ -174,10 +182,11 @@ não consegue alterar dados nem fazer a aplicação acessar URLs externas.
 
 ### Sistema
 
-| Método | Rota      | Descrição                          |
-| ------ | --------- | ---------------------------------- |
-| GET    | `/`       | Página inicial da API              |
-| GET    | `/health` | Verifica se a API está funcionando |
+| Método | Rota      | Descrição                                 |
+| ------ | --------- | ----------------------------------------- |
+| GET    | `/`       | Página visual do Radar de Preços          |
+| GET    | `/api`    | Informações básicas e estado da API       |
+| GET    | `/health` | Verifica se a API está funcionando        |
 
 ### Produtos
 
