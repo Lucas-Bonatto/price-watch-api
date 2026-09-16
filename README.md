@@ -66,6 +66,7 @@ price-watch-api/
 │   │   └── alert_service.py
 │   ├── static/
 │   │   ├── app.js
+│   │   ├── favicon.svg
 │   │   ├── index.html
 │   │   └── styles.css
 │   ├── config.py
