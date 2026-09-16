@@ -4,6 +4,8 @@ API desenvolvida em Python para cadastrar produtos, coletar preços via web scra
 
 Este projeto simula um cenário real de backend, com organização em camadas, banco de dados, documentação automática, tratamento de erros, persistência de dados e testes automatizados.
 
+**Demonstração pública:** [abrir a documentação interativa no Swagger](https://price-watch-api.vercel.app/docs)
+
 ## Funcionalidades
 
 * Cadastro de produtos para monitoramento
@@ -143,6 +145,9 @@ http://127.0.0.1:8000/docs
 ```
 
 ## Demonstração pública segura
+
+A demonstração está disponível em
+[price-watch-api.vercel.app/docs](https://price-watch-api.vercel.app/docs).
 
 A aplicação pode ser publicada como uma demonstração navegável pelo Swagger, sem
 expor operações perigosas. Na Vercel, o modo somente para leitura é ativado
@@ -312,7 +317,8 @@ Esse arquivo não é versionado no GitHub, pois está incluído no `.gitignore`.
 
 ## Status do projeto
 
-Projeto funcional localmente e preparado para uma demonstração pública segura.
+Projeto funcional localmente e publicado como uma demonstração pública segura na
+[Vercel](https://price-watch-api.vercel.app/docs).
 
 A versão atual já possui API funcional, scraping, histórico de preços, alertas, atualização de produtos, organização em camadas, testes automatizados e integração com GitHub Actions.
 
