@@ -1,7 +1,9 @@
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 from app.config import public_demo_enabled
 from app.database import Base, SessionLocal, engine
@@ -15,6 +17,7 @@ from app.routers.system_router import router as system_router
 
 # Garante que os modelos sejam carregados antes de criar as tabelas.
 MODELS = (Product, PriceHistory)
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 tags_metadata = [
     {
@@ -64,6 +67,11 @@ def create_app(*, demo_read_only: bool | None = None) -> FastAPI:
         openapi_tags=tags_metadata,
     )
     application.state.demo_read_only = demo_read_only
+    application.mount(
+        "/static",
+        StaticFiles(directory=STATIC_DIR),
+        name="static",
+    )
 
     @application.middleware("http")
     async def enforce_public_demo_read_only(

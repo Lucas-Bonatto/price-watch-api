@@ -1,14 +1,27 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse
 
 router = APIRouter(tags=["Sistema"])
+LANDING_PAGE = Path(__file__).resolve().parents[1] / "static" / "index.html"
 
 
 @router.get(
     "/",
-    summary="Página inicial da API",
-    description="Retorna uma mensagem simples informando que a API está funcionando.",
+    include_in_schema=False,
+    response_class=FileResponse,
 )
-def root(request: Request):
+def landing_page() -> FileResponse:
+    return FileResponse(LANDING_PAGE, media_type="text/html")
+
+
+@router.get(
+    "/api",
+    summary="Informações básicas da API",
+    description="Retorna os links e o estado básico da API.",
+)
+def api_info(request: Request):
     response = {
         "message": "API de Monitoramento de Preços está funcionando!",
         "docs": "/docs",

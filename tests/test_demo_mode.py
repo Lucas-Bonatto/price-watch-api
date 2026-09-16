@@ -58,10 +58,10 @@ def test_demo_seed_should_be_idempotent(db_session):
 
 
 def test_demo_system_routes_should_describe_read_only_mode(demo_client):
-    root_response = demo_client.get("/")
+    api_response = demo_client.get("/api")
     health_response = demo_client.get("/health")
 
-    assert root_response.json()["demo_mode"] == "read-only"
+    assert api_response.json()["demo_mode"] == "read-only"
     assert health_response.json() == {
         "status": "ok",
         "demo_mode": "read-only",
